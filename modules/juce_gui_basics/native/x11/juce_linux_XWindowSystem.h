@@ -217,7 +217,7 @@ private:
     //==============================================================================
     void handleKeyPressEvent        (LinuxComponentPeer<::Window>*, XKeyEvent&) const;
     void handleKeyReleaseEvent      (LinuxComponentPeer<::Window>*, const XKeyEvent&) const;
-    void handleWheelEvent           (LinuxComponentPeer<::Window>*, const XButtonPressedEvent&, float) const;
+    void handleWheelEvent           (LinuxComponentPeer<::Window>*, const XButtonPressedEvent&, float, float) const;
     void handleButtonPressEvent     (LinuxComponentPeer<::Window>*, const XButtonPressedEvent&, int) const;
     void handleButtonPressEvent     (LinuxComponentPeer<::Window>*, const XButtonPressedEvent&) const;
     void handleButtonReleaseEvent   (LinuxComponentPeer<::Window>*, const XButtonReleasedEvent&) const;
@@ -245,7 +245,7 @@ private:
    #endif
 
     int shmCompletionEvent = 0;
-    int pointerMap[5] = {};
+    int pointerMap[7] = {};
     String localClipboardContent;
 
     Point<int> parentScreenPosition;

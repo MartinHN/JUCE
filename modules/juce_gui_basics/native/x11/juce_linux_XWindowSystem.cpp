@@ -227,7 +227,9 @@ namespace Keys
         MiddleButton = 2,
         RightButton = 3,
         WheelUp = 4,
-        WheelDown = 5
+        WheelDown = 5,
+        WheelLeft = 6,
+        WheelRight = 7
     };
 
     static int AltMask = 0;
@@ -2659,7 +2661,7 @@ void XWindowSystem::setWindowType (::Window windowH, int styleFlags) const
 void XWindowSystem::initialisePointerMap()
 {
     auto numButtons = X11Symbols::getInstance()->xGetPointerMapping (display, nullptr, 0);
-    pointerMap[2] = pointerMap[3] = pointerMap[4] = Keys::NoButton;
+    pointerMap[2] = pointerMap[3] = pointerMap[4] = pointerMap[5] = pointerMap[6] = Keys::NoButton;
 
     if (numButtons == 2)
     {
@@ -2676,6 +2678,10 @@ void XWindowSystem::initialisePointerMap()
         {
             pointerMap[3] = Keys::WheelUp;
             pointerMap[4] = Keys::WheelDown;
+        }
+        if(numButtons>=7){
+            pointerMap[5] = Keys::WheelLeft;
+            pointerMap[6] = Keys::WheelRight;
         }
     }
 }
@@ -3141,10 +3147,10 @@ void XWindowSystem::handleKeyReleaseEvent (LinuxComponentPeer<::Window>* peer, c
     }
 }
 
-void XWindowSystem::handleWheelEvent (LinuxComponentPeer<::Window>* peer, const XButtonPressedEvent& buttonPressEvent, float amount) const
+void XWindowSystem::handleWheelEvent (LinuxComponentPeer<::Window>* peer, const XButtonPressedEvent& buttonPressEvent, float amount,float amountX) const
 {
     MouseWheelDetails wheel;
-    wheel.deltaX = 0.0f;
+    wheel.deltaX = amountX;
     wheel.deltaY = amount;
     wheel.isReversed = false;
     wheel.isSmooth = false;
@@ -3173,8 +3179,10 @@ void XWindowSystem::handleButtonPressEvent (LinuxComponentPeer<::Window>* peer, 
     {
         switch (pointerMap[mapIndex])
         {
-            case Keys::WheelUp:         handleWheelEvent (peer, buttonPressEvent,  50.0f / 256.0f); break;
-            case Keys::WheelDown:       handleWheelEvent (peer, buttonPressEvent, -50.0f / 256.0f); break;
+            case Keys::WheelUp:         handleWheelEvent (peer, buttonPressEvent,  50.0f / 256.0f, 0); break;
+            case Keys::WheelDown:       handleWheelEvent (peer, buttonPressEvent, -50.0f / 256.0f, 0); break;
+            case Keys::WheelLeft:       handleWheelEvent (peer, buttonPressEvent, 0,  50.0f / 256.0f); break;
+            case Keys::WheelRight:      handleWheelEvent (peer, buttonPressEvent, 0, -50.0f / 256.0f); break;
             case Keys::LeftButton:      handleButtonPressEvent (peer, buttonPressEvent, ModifierKeys::leftButtonModifier); break;
             case Keys::RightButton:     handleButtonPressEvent (peer, buttonPressEvent, ModifierKeys::rightButtonModifier); break;
             case Keys::MiddleButton:    handleButtonPressEvent (peer, buttonPressEvent, ModifierKeys::middleButtonModifier); break;
