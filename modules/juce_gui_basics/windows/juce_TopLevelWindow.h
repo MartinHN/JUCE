@@ -116,6 +116,15 @@ public:
         @see setUsingNativeTitleBar
     */
     bool isUsingNativeTitleBar() const noexcept;
+ 
+    /** Sets whether the OS-native title bar (if in use) will be transparent.
+        Notice that this will be ignored if you are not using an OS-native title bar!
+        Also, this is currently only supported on Mac.
+        @see setUsingNativeTitleBar, isNativeTitleBarTransparent
+    */
+    void setNativeTitleBarTransparent (bool nativeTitleBarTransparent);
+
+    bool getNativeTitleBarTransparent () const noexcept { return nativeTitleBarTransparent; }
 
     /** Sets whether the window can handle multi-touch events on Windows. The default value is false.
 
@@ -178,7 +187,7 @@ protected:
 private:
     friend class detail::TopLevelWindowManager;
     friend class ResizableWindow;
-    bool useDropShadow = true, useNativeTitleBar = false, isCurrentlyActive = false;
+    bool useDropShadow = true, useNativeTitleBar = false, nativeTitleBarTransparent = false, isCurrentlyActive = false;
     bool canUseWindowsMultiTouch = false;
     std::unique_ptr<DropShadower> shadower;
 

@@ -265,6 +265,7 @@ public:
             [view setAppearance: [NSAppearance appearanceNamed: NSAppearanceNameAqua]];
 
             [window setHasShadow: ((windowStyleFlags & windowHasDropShadow) != 0)];
+            [window setTitlebarAppearsTransparent:(windowStyleFlags & windowHasTransparentTitleBar) != 0];
 
             if (component.isAlwaysOnTop())
                 setAlwaysOnTop (true);
@@ -363,7 +364,7 @@ public:
     {
         JUCE_AUTORELEASEPOOL
         {
-            if (! isSharedWindow)
+            if (! isSharedWindow && ! hasTransparentTitleBar())
                 [window setTitle: juceStringToNS (title)];
         }
     }
@@ -592,6 +593,11 @@ public:
     bool hasNativeTitleBar() const
     {
         return (getStyleFlags() & windowHasTitleBar) != 0;
+    }
+
+    bool hasTransparentTitleBar() const
+    {
+        return (getStyleFlags() & windowHasTransparentTitleBar) != 0;
     }
 
     bool setAlwaysOnTop (bool alwaysOnTop) override
@@ -1465,6 +1471,8 @@ public:
         if ((flags & windowHasMinimiseButton) != 0)  style |= NSWindowStyleMaskMiniaturizable;
         if ((flags & windowHasCloseButton) != 0)     style |= NSWindowStyleMaskClosable;
         if ((flags & windowIsResizable) != 0)        style |= NSWindowStyleMaskResizable;
+        if ((flags & windowHasTransparentTitleBar) != 0)  style |= NSWindowStyleMaskFullSizeContentView;
+        
         return style;
     }
 

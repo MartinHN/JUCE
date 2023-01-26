@@ -113,6 +113,7 @@ int TopLevelWindow::getDesktopWindowStyleFlags() const
 
     if (useDropShadow)       styleFlags |= ComponentPeer::windowHasDropShadow;
     if (useNativeTitleBar)   styleFlags |= ComponentPeer::windowHasTitleBar;
+    if (nativeTitleBarTransparent)   styleFlags |= ComponentPeer::windowHasTransparentTitleBar;
 
     return styleFlags;
 }
@@ -156,6 +157,17 @@ void TopLevelWindow::setUsingNativeTitleBar (const bool shouldUseNativeTitleBar)
     }
 }
 
+void TopLevelWindow::setNativeTitleBarTransparent (const bool shouldNativeTitleBarBeTransparent)
+{
+    if (nativeTitleBarTransparent != shouldNativeTitleBarBeTransparent)
+    {
+        detail::FocusRestorer focusRestorer;
+        nativeTitleBarTransparent = shouldNativeTitleBarBeTransparent;
+        recreateDesktopWindow();
+        sendLookAndFeelChange();
+    }
+}
+
 void TopLevelWindow::setUsingWindowsMultiTouch (bool shouldUseMultiTouch)
 {
     canUseWindowsMultiTouch = shouldUseMultiTouch;
@@ -163,6 +175,7 @@ void TopLevelWindow::setUsingWindowsMultiTouch (bool shouldUseMultiTouch)
     if (auto* peer = getPeer())
         peer->setWindowsCanUseMultiTouch (canUseWindowsMultiTouch);
 }
+
 
 void TopLevelWindow::recreateDesktopWindow()
 {
