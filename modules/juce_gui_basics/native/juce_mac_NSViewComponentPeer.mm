@@ -196,6 +196,7 @@ public:
                 [view setAppearance: [NSAppearance appearanceNamed: NSAppearanceNameAqua]];
 
             [window setHasShadow: ((windowStyleFlags & windowHasDropShadow) != 0)];
+            [window setTitlebarAppearsTransparent:(windowStyleFlags & windowHasTransparentTitleBar) != 0];
 
             if (component.isAlwaysOnTop())
                 setAlwaysOnTop (true);
@@ -1425,6 +1426,8 @@ public:
         if ((flags & windowHasMinimiseButton) != 0)  style |= NSWindowStyleMaskMiniaturizable;
         if ((flags & windowHasCloseButton) != 0)     style |= NSWindowStyleMaskClosable;
         if ((flags & windowIsResizable) != 0)        style |= NSWindowStyleMaskResizable;
+        if ((flags & windowHasTransparentTitleBar) != 0)  style |= NSWindowStyleMaskFullSizeContentView;
+        
         return style;
     }
 

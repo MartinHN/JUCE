@@ -103,6 +103,15 @@ public:
     */
     void setUsingNativeTitleBar (bool useNativeTitleBar);
 
+    /** Sets whether the OS-native title bar (if in use) will be transparent.
+        Notice that this will be ignored if you are not using an OS-native title bar!
+        Also, this is currently only supported on Mac.
+        @see setUsingNativeTitleBar, isNativeTitleBarTransparent
+    */
+    void setNativeTitleBarTransparent (bool nativeTitleBarTransparent);
+
+    bool getNativeTitleBarTransparent () const noexcept { return nativeTitleBarTransparent; }
+
     /** Returns true if the window is currently using an OS-native title bar.
         @see setUsingNativeTitleBar
     */
@@ -154,7 +163,7 @@ protected:
 private:
     friend class TopLevelWindowManager;
     friend class ResizableWindow;
-    bool useDropShadow = true, useNativeTitleBar = false, isCurrentlyActive = false;
+    bool useDropShadow = true, useNativeTitleBar = false, nativeTitleBarTransparent = false, isCurrentlyActive = false;
     std::unique_ptr<DropShadower> shadower;
 
     std::unique_ptr<AccessibilityHandler> createAccessibilityHandler() override;
