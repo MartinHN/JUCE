@@ -2284,6 +2284,22 @@ public:
                                   : deviceNames[toUnderlyingType (PlaybackDirection::output)];
         }
 
+        String getDeviceIdentifier (const String& deviceName, bool asInput) const final
+        {
+            jassert (hasScanned); // need to call scanForDevices() before doing this
+
+            const auto direction = asInput ? PlaybackDirection::input
+                                           : PlaybackDirection::output;
+
+            const auto index = deviceNames[toUnderlyingType (direction)].indexOf (deviceName);
+
+            if (index < 0)
+                return deviceName;
+
+            const auto uid = devices[toUnderlyingType (direction)][index].getUid();
+            return uid.isNotEmpty() ? uid : deviceName;
+        }
+
         int getDefaultDeviceIndex (bool forInput) const final
         {
             const auto direction = forInput ? PlaybackDirection::input

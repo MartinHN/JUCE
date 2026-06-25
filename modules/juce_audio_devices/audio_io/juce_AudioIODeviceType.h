@@ -97,6 +97,22 @@ public:
     */
     virtual StringArray getDeviceNames (bool wantInputNames = false) const = 0;
 
+    /** Returns a stable, opaque identifier for the named device.
+
+        The identifier survives reconnects and disambiguates two identical interfaces,
+        making it suitable for keying per-device settings. The default implementation
+        returns the device name, which is the best available identifier for backends with
+        no per-unit id (e.g. ASIO drivers).
+
+        @param deviceName    one of the strings returned by getDeviceNames()
+        @param asInput       which of the input/output name lists deviceName came from
+    */
+    virtual String getDeviceIdentifier (const String& deviceName, bool asInput) const
+    {
+        ignoreUnused (asInput);
+        return deviceName;
+    }
+
     /** Returns the name of the default device.
 
         This will be one of the names from the getDeviceNames() list.

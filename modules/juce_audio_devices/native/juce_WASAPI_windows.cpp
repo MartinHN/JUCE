@@ -1820,6 +1820,18 @@ public:
                               : devices.outputDeviceNames;
     }
 
+    String getDeviceIdentifier (const String& deviceName, bool asInput) const override
+    {
+        jassert (hasScanned); // need to call scanForDevices() before doing this
+
+        const auto& names = asInput ? devices.inputDeviceNames : devices.outputDeviceNames;
+        const auto& ids   = asInput ? devices.inputDeviceIds   : devices.outputDeviceIds;
+
+        const auto index = names.indexOf (deviceName);
+
+        return index >= 0 ? ids[index] : deviceName;
+    }
+
     int getDefaultDeviceIndex (bool /*forInput*/) const override
     {
         jassert (hasScanned); // need to call scanForDevices() before doing this
