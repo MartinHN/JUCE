@@ -365,6 +365,10 @@ private:
 };
 
 //==============================================================================
+/*  AudioObjectRemovePropertyListener does not synchronise with a notification
+    CoreAudio has already dispatched, so the plain add/remove pair can fire a
+    callback into freed client data. Registering on a queue we own lets the
+    destructor drain any in-flight notification before the owner goes away. */
 class PropertyListener
 {
 public:
@@ -381,7 +385,10 @@ public:
         if (objectId == kAudioObjectUnknown)
             return;
 
-        AudioObjectAddPropertyListener (objectId, address.get(), &listenerCallback, this);
+        queue = dispatch_queue_create ("com.juce.coreaudio.propertylistener", DISPATCH_QUEUE_SERIAL);
+        block = CreateObjCBlock (this, &PropertyListener::listenerCallback);
+
+        AudioObjectAddPropertyListenerBlock (objectId, address.get(), queue, block);
     }
 
     ~PropertyListener()
@@ -389,27 +396,25 @@ public:
         if (objectId == kAudioObjectUnknown)
             return;
 
-        AudioObjectRemovePropertyListener (objectId, address.get(), &listenerCallback, this);
+        AudioObjectRemovePropertyListenerBlock (objectId, address.get(), queue, block);
+
+        dispatch_sync (queue, ^{});
+
+        dispatch_release (queue);
     }
 
 private:
-    static OSStatus listenerCallback (AudioObjectID,
-                                      UInt32 numberOfAddresses,
-                                      const AudioObjectPropertyAddress*,
-                                      void* inClientData)
+    void listenerCallback (UInt32 numberOfAddresses, const AudioObjectPropertyAddress*)
     {
         for (UInt32 i = 0; i < numberOfAddresses; ++i)
-        {
-            auto* listener = static_cast<PropertyListener*> (inClientData);
-            NullCheckedInvocation::invoke (listener->callback);
-        }
-
-        return noErr;
+            NullCheckedInvocation::invoke (callback);
     }
 
     AudioObjectID objectId{};
     PropertyAddress address;
     Callback callback{};
+    dispatch_queue_t queue = nullptr;
+    ObjCBlock<AudioObjectPropertyListenerBlock> block;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PropertyListener)
     JUCE_DECLARE_NON_MOVEABLE (PropertyListener)
