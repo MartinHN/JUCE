@@ -373,7 +373,12 @@ private:
     The HAL can also enqueue a notification after RemovePropertyListenerBlock has
     returned, so the drain alone is not sufficient. The block therefore captures a
     shared state by value and the destructor nulls the callback under its lock, so
-    a late delivery runs against valid memory and does nothing. */
+    a late delivery runs against valid memory and does nothing.
+
+    The callback runs with that lock held and the destructor waits on both the
+    lock and the queue, so a callback must never block on the thread that
+    destroys the listener and must never destroy the listener itself: either
+    deadlocks the teardown. */
 class PropertyListener
 {
 public:
