@@ -368,7 +368,12 @@ private:
 /*  AudioObjectRemovePropertyListener does not synchronise with a notification
     CoreAudio has already dispatched, so the plain add/remove pair can fire a
     callback into freed client data. Registering on a queue we own lets the
-    destructor drain any in-flight notification before the owner goes away. */
+    destructor drain any in-flight notification before the owner goes away.
+
+    The HAL can also enqueue a notification after RemovePropertyListenerBlock has
+    returned, so the drain alone is not sufficient. The block therefore captures a
+    shared state by value and the destructor nulls the callback under its lock, so
+    a late delivery runs against valid memory and does nothing. */
 class PropertyListener
 {
 public:
@@ -379,14 +384,26 @@ public:
                       PropertyScope scope,
                       Callback callbackIn)
         : objectId (objectIdIn),
-          address (selector, scope, kAudioObjectPropertyElementWildcard),
-          callback (std::move (callbackIn))
+          address (selector, scope, kAudioObjectPropertyElementWildcard)
     {
         if (objectId == kAudioObjectUnknown)
             return;
 
+        state = std::make_shared<SharedState>();
+        state->callback = std::move (callbackIn);
         queue = dispatch_queue_create ("com.juce.coreaudio.propertylistener", DISPATCH_QUEUE_SERIAL);
-        block = CreateObjCBlock (this, &PropertyListener::listenerCallback);
+
+        auto sharedState = state;
+        block = ^void (UInt32 numberOfAddresses, const AudioObjectPropertyAddress*)
+        {
+            const ScopedLock sl (sharedState->lock);
+
+            if (sharedState->callback == nullptr)
+                return;
+
+            for (UInt32 i = 0; i < numberOfAddresses; ++i)
+                sharedState->callback();
+        };
 
         AudioObjectAddPropertyListenerBlock (objectId, address.get(), queue, block);
     }
@@ -398,21 +415,28 @@ public:
 
         AudioObjectRemovePropertyListenerBlock (objectId, address.get(), queue, block);
 
-        dispatch_sync (queue, ^{});
+        // blocks until a callback that already passed the null check has finished
+        {
+            const ScopedLock sl (state->lock);
+            state->callback = nullptr;
+        }
 
+        dispatch_sync (queue, ^{}); // drain any in-flight notification
+
+        state.reset();
         dispatch_release (queue);
     }
 
 private:
-    void listenerCallback (UInt32 numberOfAddresses, const AudioObjectPropertyAddress*)
+    struct SharedState
     {
-        for (UInt32 i = 0; i < numberOfAddresses; ++i)
-            NullCheckedInvocation::invoke (callback);
-    }
+        CriticalSection lock;
+        Callback callback;
+    };
 
     AudioObjectID objectId{};
     PropertyAddress address;
-    Callback callback{};
+    std::shared_ptr<SharedState> state;
     dispatch_queue_t queue = nullptr;
     ObjCBlock<AudioObjectPropertyListenerBlock> block;
 
